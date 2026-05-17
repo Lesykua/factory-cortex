@@ -1,0 +1,2011 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Factory Cortex — Missing Context Diagnostic</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+/* ========== Factory Cortex — design tokens ========== */
+:root {
+  --bg: #0a0c0e;
+  --bg-2: #0d1014;
+  --surface: #11161c;
+  --surface-2: #161c25;
+  --surface-3: #1d2530;
+  --border: #232b36;
+  --border-strong: #323c4b;
+  --text: #f3ebda;
+  --text-muted: #8d97a6;
+  --text-dim: #5a6473;
+  --text-faint: #3b4350;
+  --accent: #f0a850;
+  --accent-bright: #ffc572;
+  --accent-dim: #6e4a23;
+  --accent-bg: rgba(240,168,80,0.08);
+  --danger: #e07a5f;
+  --danger-bg: rgba(224,122,95,0.10);
+  --good: #7fb886;
+  --good-bg: rgba(127,184,134,0.10);
+  --warning: #e8b341;
+  --shadow: 0 1px 0 rgba(255,255,255,0.02) inset, 0 24px 60px -28px rgba(0,0,0,0.6);
+  --shadow-card: 0 1px 0 rgba(255,255,255,0.025) inset;
+
+  --font-display: 'Inter Tight', 'Inter', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.5;
+  font-feature-settings: 'ss01','cv11';
+  -webkit-font-smoothing: antialiased;
+}
+body {
+  background:
+    radial-gradient(1100px 700px at 80% -10%, rgba(240,168,80,0.06), transparent 60%),
+    radial-gradient(900px 600px at -10% 110%, rgba(112,142,200,0.04), transparent 60%),
+    var(--bg);
+  min-height: 100vh;
+}
+
+button { font-family: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: 0.5; }
+
+/* ========== App shell ========== */
+.app {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 28px 28px 80px;
+}
+
+/* ========== Top bar ========== */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 22px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+}
+.brand { display: flex; align-items: center; gap: 14px; }
+.brand-mark {
+  width: 42px; height: 42px;
+  border-radius: 9px;
+  background:
+    linear-gradient(135deg, #2a1f12 0%, #4a3318 60%, #2a1f12 100%);
+  border: 1px solid var(--accent-dim);
+  display: grid; place-items: center;
+  position: relative; overflow: hidden;
+}
+.brand-mark::after {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(circle at 30% 30%, rgba(255,197,114,0.25), transparent 60%);
+}
+.brand-mark svg { position: relative; z-index: 1; }
+.brand-name { font-family: var(--font-display); font-weight: 800; letter-spacing: 0.06em; font-size: 14.5px; }
+.brand-sub { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+.topbar-right { display: flex; gap: 10px; align-items: center; }
+
+/* ========== Pills / chips ========== */
+.pill {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-2);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.pill b { color: var(--text); font-weight: 600; }
+.pill.accent { color: var(--accent); border-color: rgba(240,168,80,0.3); background: var(--accent-bg); }
+.pill.accent b { color: var(--accent-bright); }
+.pill.good { color: var(--good); border-color: rgba(127,184,134,0.3); background: var(--good-bg); }
+.pill.danger { color: var(--danger); border-color: rgba(224,122,95,0.3); background: var(--danger-bg); }
+
+/* ========== Section title row ========== */
+.section-title {
+  display: flex; align-items: center; justify-content: space-between;
+  margin: 22px 4px 10px;
+}
+.section-title .label {
+  font-size: 12px; color: var(--text-muted); letter-spacing: 0.04em;
+}
+.section-title .hint { display: flex; gap: 8px; }
+
+/* ========== Progress bar ========== */
+.progress-track {
+  height: 6px;
+  background: var(--surface-2);
+  border-radius: 999px;
+  overflow: hidden;
+  margin: 12px 4px 24px;
+  border: 1px solid var(--border);
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent) 0%, var(--accent-bright) 100%);
+  border-radius: 999px;
+  transition: width 700ms cubic-bezier(.22,.61,.36,1);
+}
+
+/* ========== Card ========== */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: var(--shadow-card);
+}
+.card + .card { margin-top: 14px; }
+.card-title {
+  font-size: 11px; letter-spacing: 0.14em; color: var(--text-muted);
+  text-transform: uppercase; margin-bottom: 14px;
+}
+
+/* ========== HERO (the question, front and center) ========== */
+.hero-card {
+  background:
+    radial-gradient(900px 320px at 10% -10%, rgba(240,168,80,0.07), transparent 60%),
+    var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 30px 34px 32px;
+  position: relative;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow-card);
+}
+.hero-meta {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 22px;
+  display: flex; align-items: center; gap: 10px;
+}
+.hero-scene-id { color: var(--accent); }
+.hero-dot { color: var(--text-faint); }
+.hero-scene-label { color: var(--text); }
+.hero-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 36px;
+  align-items: start;
+}
+.hero-question-block { min-width: 0; }
+.hero-eyebrow {
+  font-size: 12px;
+  color: var(--text-dim);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+.hero-question {
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  margin: 0 0 18px;
+  max-width: 720px;
+  text-wrap: balance;
+  color: var(--text);
+}
+.hero-narrative {
+  color: var(--text-muted);
+  max-width: 680px;
+  font-size: 14.5px;
+  line-height: 1.65;
+  margin: 0;
+  padding-left: 14px;
+  border-left: 2px solid var(--border-strong);
+}
+
+/* ========== Support row: live KPIs + missing context ========== */
+.support-row {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.kpi-strip, .missing-strip {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 18px;
+}
+.kpi-strip-label, .missing-strip-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.kpi-strip-tiles {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.kpi-strip-tile {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.kpi-strip-tile .l {
+  font-size: 10px; color: var(--text-muted);
+  letter-spacing: 0.1em; text-transform: uppercase;
+}
+.kpi-strip-tile .v {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+.kpi-strip-tile .u {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+.kpi-strip-tile.accent {
+  background: var(--accent-bg);
+  border-color: rgba(240,168,80,0.3);
+}
+.kpi-strip-tile.accent .v { color: var(--accent-bright); }
+.kpi-strip-tile.accent .l { color: var(--accent); }
+
+.missing-strip-tags {
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+.missing-tag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+  background: var(--accent-bg);
+  border: 1px solid rgba(240,168,80,0.25);
+  padding: 5px 10px;
+  border-radius: 6px;
+  text-transform: uppercase;
+}
+
+/* ========== Evidence disclosure ========== */
+.evidence-disclosure {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+.evidence-disclosure > summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 14px 20px;
+  display: flex; justify-content: space-between; align-items: center;
+  user-select: none;
+}
+.evidence-disclosure > summary::-webkit-details-marker { display: none; }
+.evidence-sum-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.evidence-sum-label::before {
+  content: '▾';
+  color: var(--text-muted);
+  margin-right: 10px;
+  display: inline-block;
+  transition: transform 200ms ease;
+}
+.evidence-disclosure:not([open]) .evidence-sum-label::before {
+  transform: rotate(-90deg);
+}
+.evidence-sum-hint {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+}
+.evidence-disclosure[open] .evidence-sum-hint::after { content: ''; }
+.evidence-disclosure .evidence-grid {
+  padding: 0 20px 20px;
+}
+
+/* ========== Choices block ========== */
+.choices-block {
+  background:
+    linear-gradient(180deg, rgba(240,168,80,0.03), transparent 30%),
+    var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 22px 24px 18px;
+  box-shadow: 0 -4px 30px -10px rgba(240,168,80,0.04);
+}
+.choices-block-head {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  margin-bottom: 16px;
+  gap: 20px;
+}
+.choices-block-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.choices-block-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--text);
+}
+.choices-block-hint {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: right;
+}
+
+/* ========== Countdown ring ========== */
+.countdown {
+  width: 116px; height: 116px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  display: grid; place-items: center;
+  position: relative;
+}
+.countdown-svg { transform: rotate(-90deg); }
+.countdown-num {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -56%);
+  font-family: var(--font-display);
+  font-size: 30px; font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+.countdown-label {
+  position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 9px; letter-spacing: 0.14em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.countdown.warning .countdown-num { color: var(--accent-bright); }
+.countdown.danger .countdown-num { color: var(--danger); }
+.countdown.danger { animation: pulse 0.9s ease-in-out infinite; }
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(224,122,95,0); }
+  50% { box-shadow: 0 0 0 6px rgba(224,122,95,0.08); }
+}
+
+/* ========== Context panel (evidence) ========== */
+.evidence-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.evidence-block {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  padding: 18px 20px;
+  position: relative;
+}
+.evidence-block h4 {
+  font-family: var(--font-display);
+  font-size: 15.5px; font-weight: 700;
+  margin: 0 0 12px;
+  letter-spacing: -0.01em;
+}
+.evidence-block .tag {
+  position: absolute; top: 18px; right: 18px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+.evidence-list { list-style: none; padding: 0; margin: 0; }
+.evidence-list li {
+  font-size: 13px;
+  color: var(--text);
+  padding: 5px 0 5px 16px;
+  position: relative;
+  line-height: 1.55;
+}
+.evidence-list li::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 12px;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.evidence-list li.missing::before { background: var(--text-faint); }
+.evidence-list li.missing { color: var(--text-muted); }
+.evidence-list li.missing em { font-style: normal; color: var(--text-dim); }
+
+/* ========== Choices ========== */
+.choices-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.choice {
+  text-align: left;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  padding: 18px 20px 16px;
+  transition: border-color 160ms ease, background 160ms ease, transform 120ms ease;
+  position: relative;
+}
+.choice:hover:not(:disabled) {
+  border-color: var(--accent-dim);
+  background: linear-gradient(180deg, rgba(240,168,80,0.05), transparent), var(--surface-2);
+}
+.choice:active:not(:disabled) { transform: translateY(1px); }
+.choice.selected {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+  box-shadow: 0 0 0 1px var(--accent) inset, 0 0 30px -10px rgba(240,168,80,0.3);
+}
+.choice .label {
+  font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 0.16em;
+  color: var(--text-muted); text-transform: uppercase;
+  margin-bottom: 10px;
+  display: flex; justify-content: space-between;
+}
+.choice .label .kbd {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  background: var(--surface-3);
+  border: 1px solid var(--border-strong);
+  padding: 1px 6px;
+  border-radius: 4px;
+  color: var(--text-muted);
+}
+.choice.selected .label { color: var(--accent); }
+.choice.selected .label .kbd { color: var(--accent); border-color: var(--accent); background: rgba(240,168,80,0.15); }
+.choice .text {
+  font-family: var(--font-display);
+  font-size: 16px; font-weight: 600;
+  line-height: 1.35;
+  margin: 0 0 8px;
+  letter-spacing: -0.005em;
+  color: var(--text);
+}
+.choice .tradeoff {
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.choice .preview {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border);
+  display: flex; gap: 10px; flex-wrap: wrap;
+  opacity: 0; max-height: 0; overflow: hidden;
+  transition: opacity 180ms ease;
+}
+.choice:hover .preview { opacity: 1; max-height: 80px; }
+.choice .preview .chip {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: var(--surface-3);
+  color: var(--text-muted);
+}
+.choice .preview .chip.up { color: var(--good); }
+.choice .preview .chip.down { color: var(--danger); }
+
+/* ========== Commit bar ========== */
+.commit-bar {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 16px;
+  padding: 14px 4px 0;
+}
+.commit-hint {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+}
+.btn {
+  padding: 11px 22px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 14px;
+  background: var(--surface-3);
+  border: 1px solid var(--border-strong);
+  color: var(--text);
+  transition: background 160ms ease, border-color 160ms ease;
+  font-family: var(--font-display);
+  letter-spacing: -0.005em;
+}
+.btn:hover:not(:disabled) { background: var(--surface-2); }
+.btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #1a1308;
+}
+.btn.primary:hover:not(:disabled) { background: var(--accent-bright); border-color: var(--accent-bright); }
+.btn.ghost { background: transparent; border-color: var(--border); }
+
+/* ========== Intro screen ========== */
+.intro {
+  min-height: 78vh;
+  display: grid;
+  place-items: center;
+  text-align: left;
+}
+.intro-inner {
+  max-width: 760px;
+  width: 100%;
+}
+.intro-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 12px; letter-spacing: 0.18em;
+  color: var(--accent); text-transform: uppercase;
+  margin-bottom: 22px;
+}
+.intro h1 {
+  font-family: var(--font-display);
+  font-size: 72px;
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+  margin: 0 0 22px;
+  font-weight: 800;
+  text-wrap: balance;
+}
+.intro h1 em { font-style: normal; color: var(--accent); }
+.intro-lede {
+  font-size: 18px; color: var(--text-muted);
+  line-height: 1.55; max-width: 580px;
+  margin-bottom: 36px;
+}
+.intro-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 40px;
+}
+.intro-stat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  padding: 16px 18px;
+}
+.intro-stat .v {
+  font-family: var(--font-display);
+  font-size: 24px; font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.intro-stat .l {
+  font-size: 11px; color: var(--text-muted);
+  letter-spacing: 0.12em; text-transform: uppercase;
+  margin-top: 6px;
+}
+.intro-rules {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+  margin-bottom: 36px;
+}
+.intro-rule {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  padding: 18px 20px;
+}
+.intro-rule .n {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: 0.12em;
+  margin-bottom: 8px;
+}
+.intro-rule h4 {
+  font-family: var(--font-display);
+  font-size: 15px; font-weight: 700;
+  margin: 0 0 6px;
+}
+.intro-rule p { color: var(--text-muted); font-size: 13px; line-height: 1.5; margin: 0; }
+.intro-cta {
+  display: flex; gap: 12px; align-items: center;
+}
+
+/* ========== Reveal modal ========== */
+.reveal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(6,8,10,0.78);
+  backdrop-filter: blur(6px);
+  display: grid; place-items: center;
+  z-index: 50;
+  padding: 28px;
+  animation: fade 260ms ease;
+}
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+.reveal {
+  max-width: 760px; width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 16px;
+  padding: 36px 38px;
+  box-shadow: 0 30px 80px -20px rgba(0,0,0,0.6);
+  animation: rise 360ms cubic-bezier(.22,.61,.36,1);
+}
+@keyframes rise { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.reveal-verdict {
+  display: inline-flex;
+  align-items: center; gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: 18px;
+}
+.reveal-verdict.strong { background: var(--good-bg); color: var(--good); border: 1px solid rgba(127,184,134,0.3); }
+.reveal-verdict.okay   { background: var(--accent-bg); color: var(--accent); border: 1px solid rgba(240,168,80,0.3); }
+.reveal-verdict.weak   { background: var(--danger-bg); color: var(--danger); border: 1px solid rgba(224,122,95,0.3); }
+.reveal h2 {
+  font-family: var(--font-display);
+  font-size: 30px; font-weight: 800;
+  line-height: 1.1; letter-spacing: -0.02em;
+  margin: 0 0 18px;
+}
+.reveal .what-happened {
+  color: var(--text);
+  font-size: 15px; line-height: 1.6;
+  margin: 0 0 22px;
+}
+.reveal .truth-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  padding: 18px 20px;
+  margin-bottom: 22px;
+  border-left: 3px solid var(--accent);
+}
+.reveal .truth-card .label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--accent);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.reveal .truth-card p {
+  margin: 0;
+  font-size: 14px; line-height: 1.6; color: var(--text);
+}
+.reveal-kpis {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+  margin-bottom: 26px;
+}
+.reveal-kpi {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  padding: 12px 14px;
+}
+.reveal-kpi .l {
+  font-size: 10px; color: var(--text-muted);
+  letter-spacing: 0.12em; text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.reveal-kpi .v {
+  font-family: var(--font-display);
+  font-size: 18px; font-weight: 700;
+  letter-spacing: -0.01em;
+  display: flex; align-items: baseline; gap: 6px;
+}
+.reveal-kpi .d {
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+.reveal-kpi .d.up { color: var(--good); }
+.reveal-kpi .d.down { color: var(--danger); }
+
+/* ========== Result screen ========== */
+.result {
+  padding-top: 40px;
+}
+.result-grade-row {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 28px;
+  align-items: stretch;
+  margin-bottom: 22px;
+}
+.grade-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 28px;
+  text-align: center;
+  display: grid; align-content: center;
+}
+.grade-card .letter {
+  font-family: var(--font-display);
+  font-size: 130px;
+  font-weight: 800;
+  line-height: 0.9;
+  letter-spacing: -0.05em;
+  background: linear-gradient(180deg, var(--accent-bright), var(--accent));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.grade-card .label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-top: 8px;
+}
+.archetype-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 28px 30px;
+  display: grid; align-content: center;
+}
+.archetype-card .eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.archetype-card h2 {
+  font-family: var(--font-display);
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin: 0 0 14px;
+}
+.archetype-card p {
+  color: var(--text-muted);
+  font-size: 15px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.result-kpis {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 14px; margin-bottom: 22px;
+}
+.result-kpi {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px 20px;
+}
+.result-kpi .l {
+  font-size: 11px; color: var(--text-muted);
+  letter-spacing: 0.14em; text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.result-kpi .v {
+  font-family: var(--font-display);
+  font-size: 32px; font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.result-kpi .bar {
+  margin-top: 10px;
+  height: 4px; border-radius: 2px;
+  background: var(--surface-3);
+  overflow: hidden;
+}
+.result-kpi .bar > span {
+  display: block; height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent-bright));
+  transition: width 1.2s cubic-bezier(.22,.61,.36,1);
+}
+.result-kpi .delta {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+.result-debrief {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 26px 30px;
+  margin-bottom: 22px;
+}
+.result-debrief h3 {
+  font-family: var(--font-display);
+  font-size: 18px; font-weight: 700;
+  margin: 0 0 6px;
+  letter-spacing: -0.01em;
+}
+.result-debrief .sub {
+  color: var(--text-muted);
+  font-size: 13px;
+  margin-bottom: 18px;
+}
+.result-debrief ul {
+  list-style: none; padding: 0; margin: 0;
+  display: grid; gap: 10px;
+}
+.result-debrief li {
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  gap: 14px;
+  padding: 12px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 13.5px; line-height: 1.55;
+  color: var(--text);
+}
+.result-debrief li .num {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: 0.1em;
+  padding-top: 2px;
+}
+.result-debrief li .scene-name {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.result-cta {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 18px;
+}
+.share-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 18px;
+  display: flex; gap: 14px; align-items: center;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ========== Book-a-call CTA card ========== */
+.book-call-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  background:
+    radial-gradient(900px 220px at 0% 50%, rgba(240,168,80,0.10), transparent 60%),
+    var(--surface);
+  border: 1px solid rgba(240,168,80,0.35);
+  border-radius: 14px;
+  padding: 24px 28px;
+  margin-top: 18px;
+  box-shadow: 0 0 0 1px rgba(240,168,80,0.08) inset, 0 20px 60px -20px rgba(240,168,80,0.12);
+}
+.book-call-content { flex: 1; min-width: 0; }
+.book-call-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.book-call-card h3 {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  margin: 0 0 6px;
+  color: var(--text);
+}
+.book-call-card p {
+  color: var(--text-muted);
+  font-size: 13.5px;
+  line-height: 1.5;
+  margin: 0;
+}
+.btn.book-call-btn {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #1a1308;
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding: 11px 22px;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 9px;
+  transition: background 160ms ease, border-color 160ms ease, transform 120ms ease, box-shadow 160ms ease;
+  box-shadow: 0 4px 20px -4px rgba(240,168,80,0.4);
+}
+.btn.book-call-btn:hover {
+  background: var(--accent-bright);
+  border-color: var(--accent-bright);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 28px -4px rgba(240,168,80,0.5);
+}
+
+/* ========== Small utility ========== */
+.row { display: flex; align-items: center; gap: 8px; }
+.dim { color: var(--text-muted); }
+.hide { display: none !important; }
+
+/* Responsive */
+@media (max-width: 860px) {
+  .app { padding: 18px; }
+  .hero-row { grid-template-columns: 1fr; }
+  .hero-question { font-size: 30px; }
+  .countdown { justify-self: start; }
+  .support-row, .evidence-grid, .choices-grid { grid-template-columns: 1fr; }
+  .kpi-strip-tiles { grid-template-columns: repeat(2, 1fr); }
+  .choices-block-head { flex-direction: column; align-items: flex-start; }
+  .choices-block-hint { text-align: left; }
+  .intro h1 { font-size: 48px; }
+  .intro-stats, .intro-rules { grid-template-columns: 1fr 1fr; }
+  .result-grade-row { grid-template-columns: 1fr; }
+  .result-kpis { grid-template-columns: 1fr 1fr; }
+  .reveal-kpis { grid-template-columns: 1fr 1fr; }
+  .book-call-card { flex-direction: column; align-items: flex-start; gap: 16px; }
+  .btn.book-call-btn { width: 100%; justify-content: center; }
+}
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <script type="text/babel">
+/* ========== Factory Cortex — scene data ========== */
+const SCENES = [
+  {
+    id: 'S1',
+    label: 'The Morning Blind Start',
+    breadcrumb: ['MISSING MACHINE CONTEXT', 'MISSING OPERATOR CONTEXT'],
+    timer: 45,
+    narrative: "Morning startup. The edging station keeps stopping. The night shift operator adjusted the device before leaving. Nothing was logged. The PLC shows calibration trips, but not what physically changed.",
+    prompt: "The edging device keeps tripping calibration errors. What do you do first?",
+    machine: {
+      title: "Machine Evidence", tag: "SIGNALS",
+      items: [
+        { t: "Calibration error: 6 times in 42 minutes" },
+        { t: "Last successful cycle: 06:11" },
+        { t: "Sensor state: inconsistent" },
+        { t: "Adjustment history: unavailable", missing: true }
+      ]
+    },
+    operator: {
+      title: "Operator Notes", tag: "HUMAN CONTEXT",
+      items: [
+        { t: 'Night shift handover: "Edging was acting weird"' },
+        { t: "Actual adjustment made: No record", missing: true },
+        { t: "Reason for adjustment: No record", missing: true },
+        { t: "Maintenance involvement: Unknown", missing: true }
+      ]
+    },
+    choices: [
+      {
+        text: "Stop briefly and check physical setup with maintenance.",
+        tradeoff: "Trade output now for a factual read on what changed.",
+        delta: { out: -4, qual: +3, str: +4, ctx: +18 },
+        verdict: 'strong',
+        what: "Maintenance arrived in 4 minutes. The proximity sensor on the carriage was bumped during the 03:00 cleaning pass and never reseated. Three turns of an allen key. You logged it, told the next shift, and the line ran clean for the rest of the day.",
+        truthLabel: "What you couldn't see on the screen",
+        truth: "The PLC trace alone would not have shown this — the sensor was reading 'something,' just not the right something. Pulling the trace would have eaten 20 minutes and pointed you in the wrong direction."
+      },
+      {
+        text: "Pull PLC trace and compare it with the last known good cycle.",
+        tradeoff: "Use the machine record to expose what the current trace cannot explain.",
+        delta: { out: -7, qual: +1, str: +6, ctx: +8 },
+        verdict: 'okay',
+        what: "You ran the trace comparison. The current cycle looks subtly noisier but inside spec, which doesn't help you decide. After 25 minutes you called maintenance anyway and they found a bumped sensor.",
+        truthLabel: "What the trace couldn't tell you",
+        truth: "Calibration drift this small lives below the resolution of PLC logs. Machine data without operator and physical context turns into a guessing game. You lost 20+ minutes that another path could have saved."
+      },
+      {
+        text: "Restart the device and ask the operator to keep an eye on it.",
+        tradeoff: "Protect the minute, but leave the cause mostly invisible.",
+        delta: { out: +2, qual: -8, str: +10, ctx: -12 },
+        verdict: 'weak',
+        what: "Production held for 90 minutes. Then the errors came back, worse — three pieces went out of spec before the operator could catch it. The bumped sensor finally walked itself loose around lunchtime. You spent the afternoon doing the inspection you skipped.",
+        truthLabel: "The cost of moving on without context",
+        truth: "Restarting a system you don't understand buys time at the price of trust in the data. The night-shift change was never logged, the day-shift fix was never logged, and tomorrow morning you'll be in the same room having the same conversation."
+      },
+      {
+        text: "Bypass edging and continue production.",
+        tradeoff: "Preserve output now while accepting traceability loss.",
+        delta: { out: +6, qual: -16, str: +8, ctx: -22 },
+        verdict: 'weak',
+        what: "You hit the volume number. Quality returned 11 pieces above tolerance from the bypass window — three reached the customer. Two weeks later the customer sent them back with a request for root cause. You did not have one.",
+        truthLabel: "What gets paid back later",
+        truth: "Bypassing a calibration-tripping device is a controlled gamble that only works if it's documented and bounded. Here neither was true. The customer's question — 'what changed?' — had no answer in any log."
+      }
+    ]
+  },
+  {
+    id: 'S2',
+    label: 'The Vanishing Quality Drift',
+    breadcrumb: ['MISSING SAMPLING CONTEXT', 'MISSING SUPPLIER CONTEXT'],
+    timer: 45,
+    narrative: "Mid-morning. Day-shift QA flags that the gloss on Line 4 looks slightly off, batch after batch. SPC charts show nothing. The lab approved every sample. The customer ships at 16:00.",
+    prompt: "Quality is reporting a 'feel' problem with no data behind it. The shipment is 5 hours out. What do you do?",
+    machine: {
+      title: "Machine Evidence", tag: "SIGNALS",
+      items: [
+        { t: "Defect rate: 0.3% (within 0.5% threshold)" },
+        { t: "Color spectro: passes on every sample" },
+        { t: "Batch records: complete and signed" },
+        { t: "Pigment lot ID: not tied to batch report", missing: true }
+      ]
+    },
+    operator: {
+      title: "Operator Notes", tag: "HUMAN CONTEXT",
+      items: [
+        { t: 'Day QA: "Three batches feel matte to me"' },
+        { t: 'Third-shift QA log: "Slight tone shift, lab cleared"' },
+        { t: "What was different about today's pigment delivery: Unknown", missing: true },
+        { t: "Whether the customer's spec covers gloss: Unverified", missing: true }
+      ]
+    },
+    choices: [
+      {
+        text: "Pull the QA tech in, walk the line, cross-reference today's pigment lot.",
+        tradeoff: "Spend an hour now to turn a feeling into a fact before the truck loads.",
+        delta: { out: -3, qual: +14, str: +5, ctx: +20 },
+        verdict: 'strong',
+        what: "The QA tech remembered the drum: a new supplier lot, opened at 06:00. The lot ID had never made it onto the batch report — your system tied it to the bag-house, not the line. The pigment was on spec for color but off for binder ratio. Two batches got pulled, the customer never saw them, and you wrote the missing trace into the report template that afternoon.",
+        truthLabel: "What the numbers couldn't show",
+        truth: "Spec-pass + human-flag is the highest-yield signal in this kind of plant. The system told you everything was fine because it was measuring the wrong axis. The operator's discomfort was the actual data."
+      },
+      {
+        text: "Run an additional destructive batch test on the next batch.",
+        tradeoff: "Get more data, but only on what you already measure.",
+        delta: { out: -5, qual: +4, str: +6, ctx: +6 },
+        verdict: 'okay',
+        what: "The destructive test came back fine. Of course it did — you tested the same axis the lab was already testing. You shipped on time. Three weeks later the customer logged a finish complaint and you spent two days finding a pigment lot ID nobody had recorded.",
+        truthLabel: "Measuring the same thing harder",
+        truth: "When the data says one thing and an experienced operator says another, the answer is rarely to take more of the same data. It is almost always to widen the question."
+      },
+      {
+        text: "Ship as planned, flag for retrospective review next week.",
+        tradeoff: "Protect the delivery date, accept the cost of being wrong later.",
+        delta: { out: +5, qual: -18, str: +9, ctx: -16 },
+        verdict: 'weak',
+        what: "The shipment left at 16:00. Customer rejected the lot 9 days later. Two weeks of revenue went into a credit note and a corrective action plan. The retrospective review had no pigment lot ID to anchor on; it became a meeting, not an answer.",
+        truthLabel: "The cost of an unanswered question",
+        truth: "Once the truck leaves the gate, the cost of an unknown becomes its full cost. The cheapest moment to investigate was when the operator first said 'this feels different.'"
+      },
+      {
+        text: "Switch suppliers on the next run, dodge the question.",
+        tradeoff: "Eliminate the risk without learning what caused it.",
+        delta: { out: -2, qual: -4, str: +12, ctx: -10 },
+        verdict: 'weak',
+        what: "Procurement was furious. The replacement supplier was 14% more expensive and the same problem appeared two months later from the new vendor. You had learned nothing transferable, only that you could write a check to make today's problem someone else's tomorrow.",
+        truthLabel: "Why the problem followed you",
+        truth: "The variable wasn't the supplier — it was the missing pigment lot trace in your batch report. Without that, any supplier eventually drifts on you and you have no way to see it coming."
+      }
+    ]
+  },
+  {
+    id: 'S3',
+    label: 'The Phantom Maintenance Window',
+    breadcrumb: ['MISSING VENDOR CONTEXT', 'MISSING ASSET HISTORY'],
+    timer: 45,
+    narrative: "Planned maintenance on Line 2 is scheduled for 14:00. The vendor technician is delayed by traffic, ETA unclear. Bearing temperatures on the main drive have been climbing 0.4°C/hour since 10:00. Line 3 is running below capacity.",
+    prompt: "The vendor is late and the asset is warming. The window is yours to decide.",
+    machine: {
+      title: "Machine Evidence", tag: "SIGNALS",
+      items: [
+        { t: "Bearing temp: +1.6°C over baseline since 10:00" },
+        { t: "Vibration trend: stable, no anomalies" },
+        { t: "Time since last service: 1,840 hrs (target 2,000)" },
+        { t: "Previous bearing replacement reason: not logged", missing: true }
+      ]
+    },
+    operator: {
+      title: "Operator Notes", tag: "HUMAN CONTEXT",
+      items: [
+        { t: "Vendor tech ETA: 'within 2 hours' (originally 14:00)" },
+        { t: "Line 3 supervisor: 'I can pick up 60% of Line 2 load'" },
+        { t: "Operator on Line 2: 'sounded normal at 13:00 walk-by'" },
+        { t: "Why the last bearing was changed: Nobody on shift remembers", missing: true }
+      ]
+    },
+    choices: [
+      {
+        text: "Pull Line 2 down now and start the inspection yourself.",
+        tradeoff: "Stop production early. Get eyes on the asset before the vendor arrives.",
+        delta: { out: -8, qual: +2, str: +5, ctx: +16 },
+        verdict: 'strong',
+        what: "Your in-house team opened the housing. The grease was contaminated — fines from a seal failure that nobody had logged. By the time the vendor arrived at 15:40 you'd already identified the seal upstream of the bearing as the actual replacement. Total downtime: 90 minutes instead of the 3 hours it would have taken to find the seal in a panic the next morning.",
+        truthLabel: "What waiting would have cost",
+        truth: "A 0.4°C/hour climb is a story already in motion. Every minute you wait for outside help on an asset trending the wrong way is borrowed time billed at premium rates."
+      },
+      {
+        text: "Shift 60% of load to Line 3, hold Line 2 in monitor mode for the vendor.",
+        tradeoff: "Soften the impact, keep the vendor's eye on the asset.",
+        delta: { out: -3, qual: +1, str: +3, ctx: +6 },
+        verdict: 'okay',
+        what: "Line 3 absorbed the load. The vendor arrived at 16:10 and spent 40 minutes on diagnostics — you bought the right time but at slightly higher cost than necessary. The grease contamination was found and the seal scheduled for next week. Reasonable, conservative, slightly slow.",
+        truthLabel: "A defensible middle path",
+        truth: "This is the choice that loses the fewest points and teaches the least. It works in the day's frame and doesn't change the underlying problem: nobody knows why the last bearing was changed."
+      },
+      {
+        text: "Wait for the vendor and run Line 2 in 'reduced speed' mode until then.",
+        tradeoff: "Preserve output, defer the inspection to the expert.",
+        delta: { out: +2, qual: -3, str: +10, ctx: -8 },
+        verdict: 'weak',
+        what: "The bearing held — until 15:55, when it didn't. The vendor walked in to a stopped line, a damaged shaft, and a smell. The fix that would have cost a seal and 90 minutes cost a shaft, a bearing, and 11 hours.",
+        truthLabel: "Why deferring lost",
+        truth: "Reduced-speed running on a warming bearing doesn't slow the failure — it just changes the noise the failure makes. Without history on the previous bearing change, you had no basis to assume it would hold."
+      },
+      {
+        text: "Run normally and trust the vendor's ETA.",
+        tradeoff: "Maximize output. Bet the bearing.",
+        delta: { out: +5, qual: -10, str: +14, ctx: -18 },
+        verdict: 'weak',
+        what: "Bearing seized at 15:48. Shaft sheared. Line 2 was down for the full weekend. Your customer for Tuesday's run got their order Friday after. The vendor charged emergency rates for the parts you didn't have on hand.",
+        truthLabel: "The price of an unread trend",
+        truth: "Asset history exists in three places: the CMMS, the people, and the asset itself. When all three are silent or absent, betting the asset is betting the plant."
+      }
+    ]
+  },
+  {
+    id: 'S4',
+    label: 'The Supply Squeeze',
+    breadcrumb: ['MISSING SUPPLY VISIBILITY', 'MISSING COMMERCIAL CONTEXT'],
+    timer: 45,
+    narrative: "Your primary resin supplier has slipped delivery by 48 hours. Customer A's order is due in 36. You have enough inventory for 80% of the order. Sales is asking for a number. Procurement is on hold with three alternates.",
+    prompt: "You are 20% short on raw material, 36 hours from a customer commitment. What do you commit to?",
+    machine: {
+      title: "Supply Evidence", tag: "INVENTORY",
+      items: [
+        { t: "Resin on hand: 80% of order requirement" },
+        { t: "Primary supplier ETA: +48 hours from now" },
+        { t: "Alternate grade in regional warehouse: 100% available, unqualified for this customer" },
+        { t: "Customer's contractual tolerance for short shipment: not on file", missing: true }
+      ]
+    },
+    operator: {
+      title: "Commercial Notes", tag: "HUMAN CONTEXT",
+      items: [
+        { t: "Account manager: 'Customer A is sensitive to gaps, more than to delays'" },
+        { t: "Procurement: alternate supplier can air-freight for $4,200" },
+        { t: "QA: alternate grade is chemically similar but not approved on customer's PCN" },
+        { t: "Last time Customer A took a partial: Nobody remembers if it ended well", missing: true }
+      ]
+    },
+    choices: [
+      {
+        text: "Call Customer A now. Offer 80% on time + 20% in 5 days. Ask before deciding.",
+        tradeoff: "Trade one phone call for a decision based on what they actually want.",
+        delta: { out: -2, qual: +6, str: +3, ctx: +18 },
+        verdict: 'strong',
+        what: "Customer A's plant manager picked up. Their line could absorb a 5-day staggered delivery without disruption — they had a buffer you didn't know about. You shipped 80% on time, completed the rest mid-week, and ended the call with the contractual tolerance you should have had on file in the first place.",
+        truthLabel: "The cheapest information in the building",
+        truth: "Commercial context is one phone call away and is almost never asked for in a crisis. The customer almost always knows their own constraints better than your spreadsheet does."
+      },
+      {
+        text: "Air-freight the gap from the alternate supplier. Pay the $4,200.",
+        tradeoff: "Buy your way out of the short-ship.",
+        delta: { out: +3, qual: 0, str: +6, ctx: -4 },
+        verdict: 'okay',
+        what: "Material arrived 3 hours before the run. You delivered the full order on time. Margin on this order is now thin. You also still don't know whether the customer would have accepted a partial — you just paid not to find out.",
+        truthLabel: "Money as a substitute for context",
+        truth: "Sometimes it's the right call, especially with a low-trust account. But here, $4,200 bought you a one-time fix without changing the underlying gap in your customer file."
+      },
+      {
+        text: "Substitute the alternate grade for 20% of the run. Don't tell the customer.",
+        tradeoff: "Maintain the delivery commitment. Hide the change.",
+        delta: { out: +5, qual: -18, str: +12, ctx: -22 },
+        verdict: 'weak',
+        what: "Six weeks later the customer's incoming QA found the substituted material in a routine audit. The PCN violation triggered a supplier review. The contract did not survive it.",
+        truthLabel: "Why hiding lost",
+        truth: "An unannounced material substitution on a customer with an approved-supplier list is a slow-motion contract termination. The 20% you protected cost you 100%."
+      },
+      {
+        text: "Short the order by 20%, no call, send a note with the shipment.",
+        tradeoff: "Default to lowest-friction, hope for the best.",
+        delta: { out: -4, qual: -10, str: +8, ctx: -10 },
+        verdict: 'weak',
+        what: "Customer A escalated. They had a tighter run than you knew. The 20% gap cost them a downstream commitment of their own. You spent a week on damage control and gave a 5% credit on the next two orders.",
+        truthLabel: "What 'a note in the box' assumes",
+        truth: "Silent short-shipment assumes the customer has slack you have not verified. The phone call would have cost three minutes."
+      }
+    ]
+  },
+  {
+    id: 'S5',
+    label: 'The Near-Miss Heard By One',
+    breadcrumb: ['MISSING WITNESS CONTEXT', 'MISSING ASSET CONTEXT'],
+    timer: 45,
+    narrative: "14:22. Operator on Press 3 reports she 'felt a thud, different from the normal cycle,' and a faint smell of warm metal. No alarm. No visible damage. The press has been running since 06:00. The shift ends at 18:00 and the night crew is already in the cafeteria.",
+    prompt: "One person felt something. No data has moved. What do you do?",
+    machine: {
+      title: "Machine Evidence", tag: "SIGNALS",
+      items: [
+        { t: "Cycle force trace: nominal across last 200 cycles" },
+        { t: "Acoustic monitor: enabled but unread in last 4 hours" },
+        { t: "Camera coverage: yes, but not yet reviewed", missing: true },
+        { t: "Last tie-rod inspection: 9 months ago, no findings", missing: true }
+      ]
+    },
+    operator: {
+      title: "Operator Notes", tag: "HUMAN CONTEXT",
+      items: [
+        { t: 'Operator: "Muted, lower-pitched than usual"' },
+        { t: "Was anyone else within earshot at 14:22: Unconfirmed", missing: true },
+        { t: "Operator's experience on Press 3: 6 years" },
+        { t: "Operator's history of false flags: Zero on file" }
+      ]
+    },
+    choices: [
+      {
+        text: "Stop the press now. Full mechanical inspection with two-person sign-off.",
+        tradeoff: "Lose four hours of output. Treat the operator's signal as data.",
+        delta: { out: -10, qual: +6, str: +3, ctx: +22 },
+        verdict: 'strong',
+        what: "Inspection found a hairline fracture in the upper tie-rod, 40% through. Not yet visible under load. Estimated 11 days of further running before catastrophic failure inside the operator's work cell. The press was rebuilt over the weekend. Your operator is still working there.",
+        truthLabel: "The signal that wasn't on a dashboard",
+        truth: "The most expensive signals in a plant are the ones that live inside one person's pattern-recognition and cannot survive a shift change unless someone stops and writes them down. A six-year operator with zero false flags is the most reliable sensor in the building."
+      },
+      {
+        text: "Review camera + acoustic logs from 14:22 first, then decide.",
+        tradeoff: "Verify before disrupting. Spend 30 minutes on the recording.",
+        delta: { out: -3, qual: +2, str: +5, ctx: +10 },
+        verdict: 'okay',
+        what: "Acoustic logs showed a 0.3 dB anomaly at 14:22:18, easy to miss without the operator's report to anchor it. You stopped the press at 15:05 — 43 minutes later than the strong call — and found the same fracture, slightly grown. No injury. Slightly more cost.",
+        truthLabel: "Verification as friction",
+        truth: "Verification is right when the signal is ambiguous; here, the operator's experience was the verification. The 43 minutes you bought yourself bought the fracture 43 minutes too."
+      },
+      {
+        text: "Ask the operator to flag it again if it recurs. Keep running.",
+        tradeoff: "Don't disrupt on a 'feeling.' Make the operator your sensor.",
+        delta: { out: +4, qual: -14, str: +14, ctx: -18 },
+        verdict: 'weak',
+        what: "She flagged it again at 16:40. Then at 17:15. By the time the night crew took over, the tie-rod had grown the fracture another 12%. You got the press stopped at 19:30. The operator told her union rep. The next morning's safety meeting was very long.",
+        truthLabel: "What 'keep me posted' communicated",
+        truth: "Asking the most experienced person on the floor to wait for the failure to escalate before being believed is a culture decision, not a production decision. Plants pay for it twice — once in safety, once in trust."
+      },
+      {
+        text: "Log it, move on. No witnesses, no data, no action.",
+        tradeoff: "Treat it as a one-person, no-data report.",
+        delta: { out: +5, qual: -22, str: +20, ctx: -28 },
+        verdict: 'weak',
+        what: "Eleven days later, third shift, different operator. The tie-rod failed mid-cycle. The press die went through the upper guard. No one was killed. Three weeks of investigation, regulatory involvement, and an insurance claim that doubled your premium for the next two years.",
+        truthLabel: "Why this is the most expensive choice on the page",
+        truth: "Safety incidents are paid for in advance — in attention, inspection, and willingness to act on weak signals — or in arrears. The arrears are always worse."
+      }
+    ]
+  },
+  {
+    id: 'S6',
+    label: 'The End-of-Week Shutdown',
+    breadcrumb: ['MISSING DOCUMENTATION', 'MISSING CREW CONTEXT'],
+    timer: 45,
+    narrative: "Friday 17:48. Final batch of the week is 2% short of customer quantity. Mixing tank shows residue from a compatible previous lot. The crew is changing out. Monday is a long weekend; the next run isn't until Tuesday. Sales already promised the full quantity for Monday morning delivery.",
+    prompt: "Your last decision of the week. Output, honesty, and the crew's weekend are all on the table.",
+    machine: {
+      title: "Production Evidence", tag: "SIGNALS",
+      items: [
+        { t: "Current batch yield: 98% of order" },
+        { t: "Compatible residue in Mixer 2: ~2% of order volume, on-spec" },
+        { t: "Time to bring fresh tank online: ~90 minutes" },
+        { t: "Whether residue lot was traced to this customer before: Unverified", missing: true }
+      ]
+    },
+    operator: {
+      title: "Crew Notes", tag: "HUMAN CONTEXT",
+      items: [
+        { t: "Crew: 'We can stay 90 minutes for a tank changeover'" },
+        { t: "Sales: 'Customer expects full quantity Monday'" },
+        { t: 'Plant manager (you): "How honest do we want to be?"' },
+        { t: "Customer's tolerance for 2% short on Monday: Not asked", missing: true }
+      ]
+    },
+    choices: [
+      {
+        text: "Hold the skeleton crew. Bring the fresh tank online. Run the full batch.",
+        tradeoff: "Pay 90 minutes of overtime to honor the commitment cleanly.",
+        delta: { out: +4, qual: +6, str: +4, ctx: +14 },
+        verdict: 'strong',
+        what: "The crew stayed. The batch closed at 19:30 with full quantity, full traceability, single lot ID. Monday delivery went out clean. You paid 90 minutes of overtime and bought a year of trust with the crew, who saw their plant manager choose the harder path.",
+        truthLabel: "Why the boring answer is usually right",
+        truth: "The expensive option that keeps the trace clean is almost always cheaper than the cheap option that breaks it. Single-lot, single-shipment, full-quantity is a story a customer never has to ask about."
+      },
+      {
+        text: "Call the customer. Confirm whether 2% short is acceptable for Monday.",
+        tradeoff: "Spend 10 minutes on a phone call before deciding anything else.",
+        delta: { out: +1, qual: +5, str: +1, ctx: +20 },
+        verdict: 'strong',
+        what: "Customer's ops manager said 2% short was fine and asked you to top up on Wednesday. You sent the crew home, didn't open a fresh tank, didn't blend residue, and earned the kind of operating relationship that gets you on the call when their next contract is up.",
+        truthLabel: "The information that costs nothing",
+        truth: "Six scenes in a row, the highest-ctx answer has been a question asked of someone who already knows. Most plants are not undertrained — they are underasking."
+      },
+      {
+        text: "Blend in the 2% residue from Mixer 2 to hit quantity. Ship clean-looking.",
+        tradeoff: "Save overtime, get the number. Lose lot-level traceability.",
+        delta: { out: +5, qual: -8, str: +6, ctx: -14 },
+        verdict: 'weak',
+        what: "You hit the number. Three months later the customer ran a recall on an unrelated issue and asked for full lot traceability for everything you'd shipped in the quarter. The 2% blend showed up as a discrepancy you could not cleanly explain.",
+        truthLabel: "When small lies become big audits",
+        truth: "Blended-residue-to-make-quantity is the kind of decision that lives quietly until the day someone asks for a complete trace. On that day, it costs significantly more than 90 minutes of Friday overtime."
+      },
+      {
+        text: "Ship 98%, send a note saying 'short shipment, will reconcile,' go home.",
+        tradeoff: "Lowest friction tonight. Unknown cost Monday.",
+        delta: { out: -2, qual: -6, str: +10, ctx: -8 },
+        verdict: 'weak',
+        what: "Customer's receiving manager opened the truck Monday morning, found the note, and called Sales at 09:04. By 10:00 your week was already worse than the week you just finished. You spent the morning explaining what a single phone call on Friday would have closed in three minutes.",
+        truthLabel: "The cheapest moment is the moment of the decision",
+        truth: "Friction deferred from Friday at 18:00 to Monday at 09:00 is always more expensive, because the customer's frame on Monday is 'why didn't you tell me,' not 'how do we solve this.'"
+      }
+    ]
+  }
+];
+
+const START_KPIS = { out: 85, qual: 80, str: 95, ctx: 45 };
+
+function archetypeFor(finalKpis, choices) {
+  const ctx = finalKpis.ctx;
+  const strongCount = choices.filter(c => c === 'strong').length;
+  const weakCount = choices.filter(c => c === 'weak').length;
+
+  if (ctx >= 130 || strongCount >= 5) {
+    return {
+      grade: 'A',
+      title: "The Context Operator",
+      desc: "You treat invisible signals as data. You asked the question that the dashboard couldn't answer. Your shift handovers will be cleaner than your peers' all-hands meetings. Watch for the inverse failure mode: spending so long verifying that you let the trend get ahead of you."
+    };
+  }
+  if (ctx >= 100 || strongCount >= 4) {
+    return {
+      grade: 'B',
+      title: "The Calibrated Pragmatist",
+      desc: "You weighted human signals heavily, sometimes after the second prompt. You'll catch most things in time and pay slightly more than the optimal price for it. Closing the gap is small, mostly habit: ask the cheap question first, every time."
+    };
+  }
+  if (ctx >= 70 || (strongCount >= 2 && weakCount <= 2)) {
+    return {
+      grade: 'C',
+      title: "The Dashboard Driver",
+      desc: "You trust what the system shows you, and you don't trust what only one person felt. That's defensible most of the time and catastrophic the rest. The fastest upgrade in your operating system is treating an experienced operator's 'something feels off' as a real signal, not a soft one."
+    };
+  }
+  if (ctx >= 40) {
+    return {
+      grade: 'D',
+      title: "The Output Defender",
+      desc: "You protected the number on the screen and let the underneath drift. Most days that posture works, until it doesn't, and then the bill arrives all at once. The pattern to break: every time you choose 'keep running,' write down what would prove you wrong. Then go look for it."
+    };
+  }
+  return {
+    grade: 'F',
+    title: "The Sleepwalker",
+    desc: "Today you optimized for friction avoidance over everything else — including safety, traceability, and the trust of the operators standing two meters away from you. Industrial leadership at this level is genuinely a different job from the one you played in this simulation. The next plant tour will feel different now."
+  };
+}
+
+/* ========== UI primitives ========== */
+const { useState, useEffect, useRef } = React;
+
+function BrandMark() {
+  return (
+    <div className="brand-mark">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+        <path d="M3 18V8L7 10V6L11 8V4L15 6V8L19 6V18H3Z" stroke="#f0a850" strokeWidth="1.4" strokeLinejoin="round"/>
+        <circle cx="11" cy="13" r="1.5" fill="#f0a850"/>
+      </svg>
+    </div>
+  );
+}
+
+function TopBar({ scene, totalScenes, ctx }) {
+  return (
+    <header className="topbar">
+      <div className="brand">
+        <BrandMark />
+        <div>
+          <div className="brand-name">FACTORY CORTEX</div>
+          <div className="brand-sub">Missing Context Diagnostic</div>
+        </div>
+      </div>
+      <div className="topbar-right">
+        {scene != null && (
+          <span className="pill"><span>Scene</span><b>{scene}</b><span>of</span><b>{totalScenes}</b></span>
+        )}
+        {ctx != null && (
+          <span className="pill accent"><span>Context Integrity</span><b>{Math.round(ctx)}</b><span style={{opacity:0.6}}>/100</span></span>
+        )}
+      </div>
+    </header>
+  );
+}
+
+function CountdownRing({ value, max }) {
+  const pct = Math.max(0, Math.min(1, value / max));
+  const r = 42, c = 2 * Math.PI * r;
+  const tone = value <= 8 ? 'danger' : value <= 18 ? 'warning' : '';
+  return (
+    <div className={`countdown ${tone}`}>
+      <svg className="countdown-svg" width="108" height="108" viewBox="0 0 108 108">
+        <circle cx="54" cy="54" r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="5"/>
+        <circle cx="54" cy="54" r={r} fill="none"
+          stroke={tone === 'danger' ? '#e07a5f' : '#f0a850'}
+          strokeWidth="5"
+          strokeLinecap="round"
+          strokeDasharray={c}
+          strokeDashoffset={c * (1 - pct)}
+          style={{ transition: 'stroke-dashoffset 900ms linear, stroke 240ms ease' }}/>
+      </svg>
+      <div className="countdown-num">{Math.max(0, Math.ceil(value))}</div>
+      <div className="countdown-label">SECONDS LEFT</div>
+    </div>
+  );
+}
+
+function EvidenceCard({ block }) {
+  return (
+    <div className="evidence-block">
+      <h4>{block.title}</h4>
+      <span className="tag">{block.tag}</span>
+      <ul className="evidence-list">
+        {block.items.map((it, i) => (
+          <li key={i} className={it.missing ? 'missing' : ''}>{it.t}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function ChoiceCard({ choice, index, selected, onClick, disabled }) {
+  const d = choice.delta;
+  const chips = [
+    { l: 'Output',  v: d.out  },
+    { l: 'Quality', v: d.qual },
+    { l: 'Stress',  v: d.str, invert: true },
+    { l: 'Context', v: d.ctx  },
+  ];
+  return (
+    <button
+      className={`choice ${selected ? 'selected' : ''}`}
+      onClick={onClick}
+      disabled={disabled}
+      aria-pressed={selected}
+    >
+      <div className="label">
+        <span>Choice {index + 1}</span>
+        <span className="kbd">{index + 1}</span>
+      </div>
+      <div className="text">{choice.text}</div>
+      <div className="tradeoff">{choice.tradeoff}</div>
+      <div className="preview">
+        {chips.map(ch => {
+          const good = ch.invert ? ch.v < 0 : ch.v > 0;
+          const bad  = ch.invert ? ch.v > 0 : ch.v < 0;
+          return (
+            <span key={ch.l} className={`chip ${good ? 'up' : bad ? 'down' : ''}`}>
+              {ch.l} {ch.v > 0 ? '+' : ''}{ch.v}
+            </span>
+          );
+        })}
+      </div>
+    </button>
+  );
+}
+
+/* ========== Screens ========== */
+
+function IntroScreen({ onStart }) {
+  return (
+    <div className="intro">
+      <div className="intro-inner">
+        <div className="intro-eyebrow">A scenario game for production leaders</div>
+        <h1>Your morning just<br/>started — and you're<br/>already <em>missing context</em>.</h1>
+        <p className="intro-lede">
+          It's 06:00. The shift is live, the pressure is on, and half the picture is missing. No handover note. No lot ID. Just an operator who said something "felt off." This is a 10-minute scenario game about the stress that production leaders feel every morning — and the decisions that define whether the day holds or breaks.
+        </p>
+        <div className="intro-stats">
+          <div className="intro-stat"><div className="v">6</div><div className="l">Scenes</div></div>
+          <div className="intro-stat"><div className="v">45s</div><div className="l">Per decision</div></div>
+          <div className="intro-stat"><div className="v">4</div><div className="l">KPIs tracked</div></div>
+          <div className="intro-stat"><div className="v">A–F</div><div className="l">Final grade</div></div>
+        </div>
+        <div className="intro-rules">
+          <div className="intro-rule">
+            <div className="n">01</div>
+            <h4>Read the gaps, not just the data</h4>
+            <p>Each scene marks what's <em>missing</em> as clearly as what's known. Most of the answer lives in the gaps.</p>
+          </div>
+          <div className="intro-rule">
+            <div className="n">02</div>
+            <h4>Decide under pressure</h4>
+            <p>Each scene has a hard timer. If you don't pick, the system picks the lowest-context option for you.</p>
+          </div>
+          <div className="intro-rule">
+            <div className="n">03</div>
+            <h4>See what you couldn't</h4>
+            <p>After every decision, we reveal the hidden context — the actual answer behind the choice.</p>
+          </div>
+        </div>
+        <div className="intro-cta">
+          <button className="btn primary" onClick={onStart} autoFocus>
+            Begin diagnostic →
+          </button>
+          <span className="dim" style={{fontSize: 13}}>Recommended on desktop. Keyboard shortcuts: 1–4 select · Enter commit.</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SceneScreen({ scene, sceneIndex, totalScenes, kpis, onCommit, frozen }) {
+  const [selected, setSelected] = useState(null);
+  const [remaining, setRemaining] = useState(scene.timer);
+  const tickRef = useRef(null);
+  const startRef = useRef(Date.now());
+  const committedRef = useRef(false);
+
+  useEffect(() => {
+    setSelected(null);
+    setRemaining(scene.timer);
+    startRef.current = Date.now();
+    committedRef.current = false;
+  }, [scene.id]);
+
+  useEffect(() => {
+    if (frozen) return;
+    if (tickRef.current) clearInterval(tickRef.current);
+    tickRef.current = setInterval(() => {
+      const elapsed = (Date.now() - startRef.current) / 1000;
+      const r = Math.max(0, scene.timer - elapsed);
+      setRemaining(r);
+      if (r <= 0 && !committedRef.current) {
+        clearInterval(tickRef.current);
+        committedRef.current = true;
+        const worstIdx = scene.choices
+          .map((c, i) => ({ i, ctx: c.delta.ctx }))
+          .sort((a, b) => a.ctx - b.ctx)[0].i;
+        onCommit(worstIdx, true);
+      }
+    }, 100);
+    return () => clearInterval(tickRef.current);
+  }, [scene.id, frozen]);
+
+  useEffect(() => {
+    if (frozen) return;
+    function onKey(e) {
+      if (['1','2','3','4'].includes(e.key)) {
+        const idx = parseInt(e.key) - 1;
+        if (idx < scene.choices.length) setSelected(idx);
+      } else if (e.key === 'Enter') {
+        setSelected(s => {
+          if (s != null && !committedRef.current) {
+            committedRef.current = true;
+            clearInterval(tickRef.current);
+            onCommit(s, false);
+          }
+          return s;
+        });
+      }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [scene.id, frozen]);
+
+  function commit() {
+    if (selected == null || committedRef.current) return;
+    committedRef.current = true;
+    clearInterval(tickRef.current);
+    onCommit(selected, false);
+  }
+
+  const progressPct = (sceneIndex / totalScenes) * 100;
+  const progressInScene = frozen ? (1 / totalScenes) * 100 : ((1 - remaining / scene.timer) / totalScenes) * 100;
+  const kbd = {fontFamily:'var(--font-mono)',background:'var(--surface-3)',border:'1px solid var(--border-strong)',padding:'1px 6px',borderRadius:4,marginInline:3,fontSize:11};
+
+  return (
+    <>
+      <TopBar scene={sceneIndex + 1} totalScenes={totalScenes} ctx={kpis.ctx} />
+      <div className="progress-track">
+        <div className="progress-fill" style={{ width: `${progressPct + progressInScene}%` }}/>
+      </div>
+
+      <div className="hero-card">
+        <div className="hero-meta">
+          <span className="hero-scene-id">Scene {sceneIndex + 1} of {totalScenes}</span>
+          <span className="hero-dot">·</span>
+          <span className="hero-scene-label">{scene.label}</span>
+        </div>
+        <div className="hero-row">
+          <div className="hero-question-block">
+            <div className="hero-eyebrow">The decision</div>
+            <h1 className="hero-question">{scene.prompt}</h1>
+            <p className="hero-narrative">{scene.narrative}</p>
+          </div>
+          <CountdownRing value={frozen ? scene.timer : remaining} max={scene.timer} />
+        </div>
+      </div>
+
+      <div className="support-row">
+        <div className="kpi-strip">
+          <div className="kpi-strip-label">Live state</div>
+          <div className="kpi-strip-tiles">
+            <div className="kpi-strip-tile"><span className="l">Output</span><span className="v">{Math.round(kpis.out)}</span></div>
+            <div className="kpi-strip-tile"><span className="l">Quality</span><span className="v">{Math.round(kpis.qual)}</span></div>
+            <div className="kpi-strip-tile"><span className="l">Stress</span><span className="v">{Math.round(kpis.str)}<span className="u"> BPM</span></span></div>
+            <div className="kpi-strip-tile accent"><span className="l">Context</span><span className="v">{Math.round(kpis.ctx)}</span></div>
+          </div>
+        </div>
+        <div className="missing-strip">
+          <div className="missing-strip-label">What you don't know</div>
+          <div className="missing-strip-tags">
+            {scene.breadcrumb.map((b, i) => (
+              <span key={i} className="missing-tag">{b.replace(/^MISSING /, '')}</span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <details className="evidence-disclosure" open>
+        <summary>
+          <span className="evidence-sum-label">Evidence — read before choosing</span>
+          <span className="evidence-sum-hint">Click to collapse</span>
+        </summary>
+        <div className="evidence-grid">
+          <EvidenceCard block={scene.machine} />
+          <EvidenceCard block={scene.operator} />
+        </div>
+      </details>
+
+      <div className="choices-block">
+        <div className="choices-block-head">
+          <div>
+            <div className="choices-block-eyebrow">Choose one</div>
+            <div className="choices-block-title">What do you do first?</div>
+          </div>
+          <div className="choices-block-hint">
+            <kbd style={kbd}>1</kbd>–<kbd style={kbd}>4</kbd> select · <kbd style={kbd}>Enter</kbd> commit · hover for impact
+          </div>
+        </div>
+        <div className="choices-grid">
+          {scene.choices.map((c, i) => (
+            <ChoiceCard
+              key={i}
+              choice={c}
+              index={i}
+              selected={selected === i}
+              onClick={() => !frozen && setSelected(i)}
+              disabled={frozen}
+            />
+          ))}
+        </div>
+        <div className="commit-bar">
+          <div className="commit-hint">
+            {frozen ? "Decision locked in." : selected == null ? "Select a choice to continue" : `Choice ${selected + 1} selected · ready to commit`}
+          </div>
+          {!frozen && (
+            <button className="btn primary" onClick={commit} disabled={selected == null}>
+              Commit decision →
+            </button>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
+
+function RevealModal({ scene, choiceIndex, kpisBefore, kpisAfter, timedOut, onNext, isLast }) {
+  const choice = scene.choices[choiceIndex];
+  const verdictLabel = { strong: 'Strong call', okay: 'Defensible', weak: 'Costly call' }[choice.verdict];
+  const deltas = {
+    out:  kpisAfter.out  - kpisBefore.out,
+    qual: kpisAfter.qual - kpisBefore.qual,
+    str:  kpisAfter.str  - kpisBefore.str,
+    ctx:  kpisAfter.ctx  - kpisBefore.ctx,
+  };
+
+  useEffect(() => {
+    function onKey(e) { if (e.key === 'Enter') onNext(); }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  function deltaCell(label, value, unit, delta, invert) {
+    const sign = delta > 0 ? '+' : '';
+    const dirGood = invert ? delta < 0 : delta > 0;
+    const dirBad  = invert ? delta > 0 : delta < 0;
+    const cls = dirGood ? 'up' : dirBad ? 'down' : '';
+    return (
+      <div className="reveal-kpi" key={label}>
+        <div className="l">{label}</div>
+        <div className="v">
+          {Math.round(value)}<span style={{fontSize:11, color:'var(--text-muted)', fontFamily:'var(--font-mono)'}}>{unit}</span>
+          <span className={`d ${cls}`}>{sign}{Math.round(delta)}</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="reveal-backdrop">
+      <div className="reveal">
+        <div className={`reveal-verdict ${choice.verdict}`}>
+          <span style={{width:6,height:6,borderRadius:'50%',background:'currentColor',flexShrink:0}}/>
+          {timedOut ? "Timed out — defaulted to lowest-context option" : verdictLabel}
+        </div>
+        <h2>You chose: <span style={{color:'var(--accent)'}}>"{choice.text}"</span></h2>
+        <p className="what-happened">{choice.what}</p>
+        <div className="truth-card">
+          <div className="label">{choice.truthLabel}</div>
+          <p>{choice.truth}</p>
+        </div>
+        <div className="reveal-kpis">
+          {deltaCell('Output', kpisAfter.out, '/100', deltas.out, false)}
+          {deltaCell('Quality', kpisAfter.qual, '/100', deltas.qual, false)}
+          {deltaCell('Stress', kpisAfter.str, ' BPM', deltas.str, true)}
+          {deltaCell('Context', kpisAfter.ctx, '/100', deltas.ctx, false)}
+        </div>
+        <div className="commit-bar" style={{marginTop: 0, paddingTop: 0}}>
+          <div className="commit-hint">Press <kbd style={{fontFamily:'var(--font-mono)',background:'var(--surface-3)',border:'1px solid var(--border-strong)',padding:'1px 6px',borderRadius:4}}>Enter</kbd> to continue</div>
+          <button className="btn primary" onClick={onNext} autoFocus>
+            {isLast ? "See your diagnostic →" : "Next scene →"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ResultScreen({ kpisFinal, kpisStart, choiceVerdicts, choiceIndices, onRestart }) {
+  const arch = archetypeFor(kpisFinal, choiceVerdicts);
+  const rows = [
+    { l: 'Output',  v: kpisFinal.out,  pct: kpisFinal.out,  unit: '/100', delta: kpisFinal.out  - kpisStart.out },
+    { l: 'Quality', v: kpisFinal.qual, pct: kpisFinal.qual, unit: '/100', delta: kpisFinal.qual - kpisStart.qual },
+    { l: 'Stress',  v: kpisFinal.str,  pct: 100 - Math.min(100, (kpisFinal.str - 60) * 1.4), unit: ' BPM', delta: kpisFinal.str - kpisStart.str, invert: true },
+    { l: 'Context Integrity', v: kpisFinal.ctx, pct: kpisFinal.ctx, unit: '/100', delta: kpisFinal.ctx - kpisStart.ctx },
+  ];
+  const [pcts, setPcts] = useState(rows.map(() => 0));
+  useEffect(() => {
+    const t = setTimeout(() => setPcts(rows.map(r => Math.max(0, Math.min(100, r.pct)))), 100);
+    return () => clearTimeout(t);
+  }, []);
+
+  return (
+    <div className="result">
+      <TopBar scene={null} totalScenes={6} ctx={kpisFinal.ctx} />
+      <div className="section-title">
+        <span className="label">Diagnostic complete · 6 of 6 scenes</span>
+        <div className="hint">
+          <span className="pill accent"><span>Grade</span><b>{arch.grade}</b></span>
+        </div>
+      </div>
+      <div className="result-grade-row">
+        <div className="grade-card">
+          <div className="letter">{arch.grade}</div>
+          <div className="label">Final Grade</div>
+        </div>
+        <div className="archetype-card">
+          <div className="eyebrow">Your operating archetype</div>
+          <h2>{arch.title}</h2>
+          <p>{arch.desc}</p>
+        </div>
+      </div>
+      <div className="result-kpis">
+        {rows.map((r, i) => (
+          <div className="result-kpi" key={r.l}>
+            <div className="l">{r.l}</div>
+            <div className="v">{Math.round(r.v)}<span style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--text-muted)'}}>{r.unit}</span></div>
+            <div className="bar"><span style={{ width: `${pcts[i]}%` }}/></div>
+            <div className="delta">
+              {r.delta > 0 ? '+' : ''}{Math.round(r.delta)} from start
+              {r.invert && r.delta > 0 && <span style={{color:'var(--danger)'}}> · elevated</span>}
+              {r.invert && r.delta <= 0 && <span style={{color:'var(--good)'}}> · contained</span>}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="result-debrief">
+        <h3>Your six decisions</h3>
+        <div className="sub">A short read on each call, in the order you made them.</div>
+        <ul>
+          {SCENES.map((sc, i) => {
+            const v = choiceVerdicts[i];
+            const idx = choiceIndices[i];
+            const chosen = sc.choices[idx];
+            const verdictText = v === 'strong' ? 'Strong call' : v === 'okay' ? 'Defensible' : 'Costly call';
+            const verdictColor = v === 'strong' ? 'var(--good)' : v === 'okay' ? 'var(--accent)' : 'var(--danger)';
+            return (
+              <li key={sc.id}>
+                <div className="num">S{i+1}</div>
+                <div>
+                  <span className="scene-name">{sc.label} <span style={{color: verdictColor}}>· {verdictText}</span></span>
+                  <div><strong style={{color:'var(--text)'}}>"{chosen.text}"</strong></div>
+                  <div style={{color:'var(--text-muted)', fontSize: 13, marginTop: 4}}>{chosen.truth}</div>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+      {/* Book a call CTA */}
+      <div className="book-call-card">
+        <div className="book-call-content">
+          <div className="book-call-eyebrow">Want to apply this to your plant?</div>
+          <h3>Book a 30-minute diagnostic call</h3>
+          <p>Talk through your factory's context gaps with an industrial ops specialist — and find out what's really hiding in your blind spots.</p>
+        </div>
+        <a
+          href="https://tidycal.com/lesykua/30-minute-meeting-factory-cortex"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn book-call-btn"
+        >
+          Book a call →
+        </a>
+      </div>
+
+      <div className="result-cta">
+        <div className="share-card">
+          <span style={{color:'var(--accent)'}}>◆</span>
+          Factory Cortex · Grade <b style={{color:'var(--text)'}}>{arch.grade}</b> · Context Integrity <b style={{color:'var(--text)'}}>{Math.round(kpisFinal.ctx)}/100</b> · "{arch.title}"
+        </div>
+        <button className="btn primary" onClick={onRestart}>Run again →</button>
+      </div>
+    </div>
+  );
+}
+
+/* ========== App ========== */
+
+function clampKpis(k) {
+  return {
+    out:  Math.max(0, Math.min(100, k.out)),
+    qual: Math.max(0, Math.min(100, k.qual)),
+    str:  Math.max(50, Math.min(160, k.str)),
+    ctx:  Math.max(0, Math.min(150, k.ctx)),
+  };
+}
+
+function App() {
+  const [phase, setPhase] = useState('intro');
+  const [sceneIdx, setSceneIdx] = useState(0);
+  const [kpis, setKpis] = useState({ ...START_KPIS });
+  const [kpisBefore, setKpisBefore] = useState({ ...START_KPIS });
+  const [choiceIdx, setChoiceIdx] = useState(null);
+  const [timedOut, setTimedOut] = useState(false);
+  const [history, setHistory] = useState([]);
+
+  const scene = SCENES[sceneIdx];
+
+  function start() {
+    setPhase('scene');
+    setSceneIdx(0);
+    setKpis({ ...START_KPIS });
+    setKpisBefore({ ...START_KPIS });
+    setHistory([]);
+    setChoiceIdx(null);
+  }
+
+  function onCommit(idx, didTimeOut) {
+    const ch = scene.choices[idx];
+    const before = { ...kpis };
+    const after = clampKpis({
+      out:  kpis.out  + ch.delta.out,
+      qual: kpis.qual + ch.delta.qual,
+      str:  kpis.str  + ch.delta.str,
+      ctx:  kpis.ctx  + ch.delta.ctx,
+    });
+    setKpisBefore(before);
+    setKpis(after);
+    setChoiceIdx(idx);
+    setTimedOut(didTimeOut);
+    setHistory(h => [...h, { verdict: ch.verdict, choice: idx }]);
+    setPhase('reveal');
+  }
+
+  function onNext() {
+    if (sceneIdx >= SCENES.length - 1) {
+      setPhase('end');
+    } else {
+      setSceneIdx(i => i + 1);
+      setPhase('scene');
+    }
+  }
+
+  return (
+    <div className="app">
+      {phase === 'intro' && (
+        <>
+          <TopBar />
+          <IntroScreen onStart={start} />
+        </>
+      )}
+
+      {phase === 'scene' && scene && (
+        <SceneScreen
+          scene={scene}
+          sceneIndex={sceneIdx}
+          totalScenes={SCENES.length}
+          kpis={kpis}
+          onCommit={onCommit}
+          frozen={false}
+        />
+      )}
+
+      {phase === 'reveal' && scene && (
+        <>
+          <SceneScreen
+            scene={scene}
+            sceneIndex={sceneIdx}
+            totalScenes={SCENES.length}
+            kpis={kpisBefore}
+            onCommit={() => {}}
+            frozen={true}
+          />
+          <RevealModal
+            scene={scene}
+            choiceIndex={choiceIdx}
+            kpisBefore={kpisBefore}
+            kpisAfter={kpis}
+            timedOut={timedOut}
+            onNext={onNext}
+            isLast={sceneIdx >= SCENES.length - 1}
+          />
+        </>
+      )}
+
+      {phase === 'end' && (
+        <ResultScreen
+          kpisFinal={kpis}
+          kpisStart={START_KPIS}
+          choiceVerdicts={history.map(h => h.verdict)}
+          choiceIndices={history.map(h => h.choice)}
+          onRestart={start}
+        />
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+  </script>
+</body>
+</html>
