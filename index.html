@@ -965,7 +965,7 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
 .dim { color: var(--text-muted); }
 .hide { display: none !important; }
 
-/* Responsive */
+/* ========== Responsive — tablet (≤860px) ========== */
 @media (max-width: 860px) {
   .app { padding: 18px; }
   .hero-row { grid-template-columns: 1fr; }
@@ -982,6 +982,182 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
   .reveal-kpis { grid-template-columns: 1fr 1fr; }
   .book-call-card { flex-direction: column; align-items: flex-start; gap: 16px; }
   .btn.book-call-btn { width: 100%; justify-content: center; }
+}
+
+/* ========== Responsive — phone (≤560px) ========== */
+@media (max-width: 560px) {
+
+  /* ---- Global phone shell ---- */
+  .app { padding: 10px 12px 24px; }
+
+  /* ---- Topbar: single compact line ---- */
+  .topbar { padding: 9px 12px; border-radius: 10px; gap: 8px; flex-shrink: 0; }
+  .brand { gap: 8px; }
+  .brand-mark { width: 30px; height: 30px; border-radius: 7px; }
+  .brand-mark svg { width: 15px; height: 15px; }
+  .brand-name { font-size: 12px; letter-spacing: 0.04em; }
+  .brand-sub { display: none; }
+  .topbar-right { gap: 6px; flex-shrink: 0; }
+  .topbar-right .pill { padding: 5px 8px; font-size: 11px; gap: 5px; }
+  .topbar-right .pill:not(.accent) { display: none; } /* hide Scene X/Y pill — shown in hero */
+
+  /* ---- Intro ---- */
+  .intro { padding: 10px 0 16px; }
+  .intro-eyebrow { font-size: 10px; margin-bottom: 14px; letter-spacing: 0.12em; }
+  .intro h1 { font-size: 28px; line-height: 1.1; margin-bottom: 14px; letter-spacing: -0.02em; text-wrap: balance; }
+  .intro-lede { font-size: 14px; margin-bottom: 22px; line-height: 1.55; }
+  .intro-stats { grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 20px; }
+  .intro-stat { padding: 10px 8px; border-radius: 9px; text-align: center; }
+  .intro-stat .v { font-size: 16px; }
+  .intro-stat .l { font-size: 9px; margin-top: 3px; letter-spacing: 0.06em; }
+  .intro-rules { grid-template-columns: 1fr; gap: 8px; margin-bottom: 22px; }
+  .intro-rule { padding: 14px 16px; }
+  .intro-rule h4 { font-size: 14px; }
+  .intro-rule p { font-size: 12.5px; }
+  .intro-cta { flex-direction: column; align-items: stretch; gap: 10px; }
+  .intro-cta .btn.primary { width: 100%; padding: 14px; font-size: 15px; }
+  .intro-cta .dim { display: none; } /* hide keyboard hint */
+
+  /* ================================================================
+     SCENE SCREEN — fixed-height viewport layout, no page scroll
+     Uses :has() to target only when scene elements are present
+     ================================================================ */
+  .app:has(.support-row) {
+    height: 100dvh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding: 8px 10px 0;
+    gap: 5px;
+  }
+
+  /* Top-section elements: fixed, don't grow */
+  .app:has(.support-row) .topbar,
+  .app:has(.support-row) .progress-track,
+  .app:has(.support-row) .support-row,
+  .app:has(.support-row) .hero-card { flex-shrink: 0; }
+
+  /* Scrollable zone takes ALL remaining space */
+  .app:has(.support-row) .scene-scroll-area {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 68px; /* room for fixed commit bar */
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  /* ---- Progress bar ---- */
+  .progress-track { height: 3px; margin: 0; }
+
+  /* ---- Support row: two columns side by side ---- */
+  .support-row {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 5px;
+    margin: 0;
+  }
+  .kpi-strip { padding: 5px 8px; border-radius: 8px; min-width: 0; overflow: hidden; }
+  .missing-strip { padding: 5px 8px; border-radius: 8px; min-width: 0; overflow: hidden; }
+  .kpi-strip-label, .missing-strip-label { font-size: 8px; margin-bottom: 3px; letter-spacing: 0.1em; }
+  .kpi-strip-tiles { grid-template-columns: repeat(4, 1fr); gap: 3px; }
+  .kpi-strip-tile { padding: 3px 4px; border-radius: 5px; }
+  .kpi-strip-tile .l { font-size: 7px; }
+  .kpi-strip-tile .v { font-size: 11px; }
+  .kpi-strip-tile .u { font-size: 7px; }
+  .missing-strip-tags { gap: 3px; flex-wrap: wrap; overflow: hidden; max-height: 44px; }
+  .missing-tag { font-size: 8.5px; padding: 2px 5px; white-space: nowrap; }
+
+  /* ---- Hero card: question + countdown only, no narrative ---- */
+  .hero-card { padding: 9px 12px; border-radius: 9px; margin: 0; }
+  .hero-meta { font-size: 8.5px; margin-bottom: 5px; gap: 6px; }
+  /* Restore side-by-side layout: question left, countdown right */
+  .hero-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; }
+  .hero-question-block { min-width: 0; }
+  .hero-question { font-size: 16px; line-height: 1.25; margin-bottom: 0; }
+  .hero-narrative { display: none; } /* hidden on mobile — use Evidence toggle instead */
+  .countdown { width: 58px; height: 58px; flex-shrink: 0; border-radius: 9px; }
+  .countdown-svg { width: 52px; height: 52px; }
+  .countdown-num { font-size: 17px; }
+  .countdown-label { font-size: 5.5px; }
+
+  /* ---- Evidence: inside scroll zone, allow full expansion ---- */
+  .evidence-disclosure { border-radius: 8px; margin: 0; overflow: visible; flex-shrink: 0; }
+  .evidence-disclosure > summary { padding: 7px 12px; }
+  .evidence-sum-label { font-size: 10px; }
+  .evidence-sum-hint { display: none; }
+  .evidence-disclosure .evidence-grid { padding: 0 12px 12px; gap: 8px; }
+  .evidence-block { padding: 10px 12px; border-radius: 8px; }
+  .evidence-block h4 { font-size: 12.5px; margin-bottom: 5px; }
+  .evidence-list li { font-size: 11.5px; padding: 3px 0 3px 12px; }
+
+  /* ---- Choices: compact, no tradeoff text, chips always visible ---- */
+  .choices-block { padding: 8px 10px 6px; border-radius: 10px; }
+  .choices-block-head { margin-bottom: 5px; flex-direction: row; align-items: center; justify-content: flex-end; }
+  .choices-block-eyebrow { font-size: 10px; }
+  .desktop-hint { display: none !important; }
+  .mobile-hint { display: block !important; font-size: 10px; }
+  .choices-grid { gap: 6px; }
+  .choice { padding: 9px 12px; border-radius: 9px; }
+  .choice .label { font-size: 8.5px; margin-bottom: 3px; }
+  .choice .text { font-size: 13px; line-height: 1.28; margin-bottom: 0; font-weight: 600; }
+  .choice .tradeoff { display: none; } /* removed on mobile to save space */
+  .choice .preview { opacity: 1 !important; max-height: none !important; margin-top: 5px; padding-top: 5px; gap: 3px; }
+  .choice .preview .chip { font-size: 9.5px; padding: 1px 5px; }
+
+  /* ---- Sticky commit bar ---- */
+  .choices-block .commit-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 40;
+    margin: 0; padding: 10px 14px;
+    background: var(--surface);
+    border-top: 1px solid var(--border-strong);
+    box-shadow: 0 -6px 20px -2px rgba(0,0,0,0.5);
+    flex-direction: row; align-items: center; gap: 10px;
+  }
+  .choices-block .commit-bar .commit-hint { font-size: 11px; flex: 1; }
+  .choices-block .commit-bar .btn.primary { white-space: nowrap; flex-shrink: 0; padding: 10px 16px; font-size: 13px; }
+
+  /* ---- Reveal modal: slide up from bottom ---- */
+  .reveal-backdrop { padding: 0; align-items: flex-end; }
+  .reveal {
+    max-width: 100%;
+    border-radius: 18px 18px 0 0;
+    padding: 20px 16px 28px;
+    max-height: 90dvh;
+    overflow-y: auto;
+  }
+  .reveal-verdict { font-size: 10px; margin-bottom: 10px; }
+  .reveal h2 { font-size: 17px; margin-bottom: 10px; line-height: 1.2; }
+  .reveal .what-happened { font-size: 13px; margin-bottom: 12px; }
+  .reveal .truth-card { padding: 11px 13px; margin-bottom: 12px; }
+  .reveal .truth-card p { font-size: 12.5px; }
+  .reveal-kpis { grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 14px; }
+  .reveal-kpi { padding: 8px 10px; }
+  .reveal-kpi .l { font-size: 8.5px; margin-bottom: 3px; }
+  .reveal-kpi .v { font-size: 14px; gap: 3px; }
+  .reveal .commit-bar { flex-direction: column-reverse; gap: 8px; padding-top: 4px; }
+  .reveal .commit-bar .btn.primary { width: 100%; padding: 13px; }
+  .reveal .commit-bar .commit-hint { font-size: 11px; text-align: center; }
+
+  /* ---- Result screen ---- */
+  .result { padding-top: 14px; }
+  .result-grade-row { grid-template-columns: 1fr; gap: 10px; }
+  .grade-card .letter { font-size: 88px; }
+  .archetype-card h2 { font-size: 22px; }
+  .result-kpis { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .result-kpi .v { font-size: 24px; }
+  .result-debrief { padding: 18px 16px; }
+  .result-debrief li { grid-template-columns: 1fr; gap: 4px; }
+  .result-cta { flex-direction: column; gap: 10px; }
+  .result-cta .btn { width: 100%; }
+  .share-card { font-size: 11px; flex-wrap: wrap; line-height: 1.5; }
+  .book-call-card { padding: 18px 16px; margin-top: 14px; }
+  .book-call-card h3 { font-size: 17px; }
+  .book-call-card p { font-size: 13px; }
 }
   </style>
 </head>
@@ -1538,7 +1714,7 @@ function IntroScreen({ onStart }) {
     <div className="intro">
       <div className="intro-inner">
         <div className="intro-eyebrow">A scenario game for production leaders</div>
-        <h1>Your morning just<br/>started — and you're<br/>already <em>missing context</em>.</h1>
+        <h1>Your morning just started — and you're already <em>missing context</em>.</h1>
         <p className="intro-lede">
           It's 06:00. The shift is live, the pressure is on, and half the picture is missing. No handover note. No lot ID. Just an operator who said something "felt off." This is a 10-minute scenario game about the stress that production leaders feel every morning — and the decisions that define whether the day holds or breaks.
         </p>
@@ -1569,7 +1745,7 @@ function IntroScreen({ onStart }) {
           <button className="btn primary" onClick={onStart} autoFocus>
             Begin diagnostic →
           </button>
-          <span className="dim" style={{fontSize: 13}}>Recommended on desktop. Keyboard shortcuts: 1–4 select · Enter commit.</span>
+          <span className="dim" style={{fontSize: 13}}>Keyboard: 1–4 select · Enter commit.</span>
         </div>
       </div>
     </div>
@@ -1648,22 +1824,7 @@ function SceneScreen({ scene, sceneIndex, totalScenes, kpis, onCommit, frozen })
         <div className="progress-fill" style={{ width: `${progressPct + progressInScene}%` }}/>
       </div>
 
-      <div className="hero-card">
-        <div className="hero-meta">
-          <span className="hero-scene-id">Scene {sceneIndex + 1} of {totalScenes}</span>
-          <span className="hero-dot">·</span>
-          <span className="hero-scene-label">{scene.label}</span>
-        </div>
-        <div className="hero-row">
-          <div className="hero-question-block">
-            <div className="hero-eyebrow">The decision</div>
-            <h1 className="hero-question">{scene.prompt}</h1>
-            <p className="hero-narrative">{scene.narrative}</p>
-          </div>
-          <CountdownRing value={frozen ? scene.timer : remaining} max={scene.timer} />
-        </div>
-      </div>
-
+      {/* Support row: KPIs + missing context — above the question */}
       <div className="support-row">
         <div className="kpi-strip">
           <div className="kpi-strip-label">Live state</div>
@@ -1684,25 +1845,43 @@ function SceneScreen({ scene, sceneIndex, totalScenes, kpis, onCommit, frozen })
         </div>
       </div>
 
-      <details className="evidence-disclosure" open>
-        <summary>
-          <span className="evidence-sum-label">Evidence — read before choosing</span>
-          <span className="evidence-sum-hint">Click to collapse</span>
-        </summary>
-        <div className="evidence-grid">
-          <EvidenceCard block={scene.machine} />
-          <EvidenceCard block={scene.operator} />
+      {/* Hero: the question, front and center */}
+      <div className="hero-card">
+        <div className="hero-meta">
+          <span className="hero-scene-id">Scene {sceneIndex + 1} of {totalScenes}</span>
+          <span className="hero-dot">·</span>
+          <span className="hero-scene-label">{scene.label}</span>
         </div>
-      </details>
+        <div className="hero-row">
+          <div className="hero-question-block">
+            <div className="hero-eyebrow">The decision</div>
+            <h1 className="hero-question">{scene.prompt}</h1>
+            <p className="hero-narrative">{scene.narrative}</p>
+          </div>
+          <CountdownRing value={frozen ? scene.timer : remaining} max={scene.timer} />
+        </div>
+      </div>
+
+      {/* Scrollable zone: evidence + choices, no page scroll on mobile */}
+      <div className="scene-scroll-area">
+        <details className="evidence-disclosure">
+          <summary>
+            <span className="evidence-sum-label">Evidence — read before choosing</span>
+            <span className="evidence-sum-hint">{scene.machine.items.length + scene.operator.items.length} signals</span>
+          </summary>
+          <div className="evidence-grid">
+            <EvidenceCard block={scene.machine} />
+            <EvidenceCard block={scene.operator} />
+          </div>
+        </details>
 
       <div className="choices-block">
         <div className="choices-block-head">
-          <div>
-            <div className="choices-block-eyebrow">Choose one</div>
-            <div className="choices-block-title">What do you do first?</div>
-          </div>
-          <div className="choices-block-hint">
+          <div className="choices-block-hint desktop-hint">
             <kbd style={kbd}>1</kbd>–<kbd style={kbd}>4</kbd> select · <kbd style={kbd}>Enter</kbd> commit · hover for impact
+          </div>
+          <div className="choices-block-hint mobile-hint" style={{display:'none'}}>
+            Tap to select · tap again to commit
           </div>
         </div>
         <div className="choices-grid">
@@ -1712,14 +1891,18 @@ function SceneScreen({ scene, sceneIndex, totalScenes, kpis, onCommit, frozen })
               choice={c}
               index={i}
               selected={selected === i}
-              onClick={() => !frozen && setSelected(i)}
+              onClick={() => {
+                if (frozen) return;
+                if (selected === i) { commit(); } // tap again = commit
+                else setSelected(i);
+              }}
               disabled={frozen}
             />
           ))}
         </div>
         <div className="commit-bar">
           <div className="commit-hint">
-            {frozen ? "Decision locked in." : selected == null ? "Select a choice to continue" : `Choice ${selected + 1} selected · ready to commit`}
+            {frozen ? "Decision locked in." : selected == null ? "Select a choice to continue" : `Choice ${selected + 1} selected · tap again or press commit`}
           </div>
           {!frozen && (
             <button className="btn primary" onClick={commit} disabled={selected == null}>
@@ -1728,6 +1911,7 @@ function SceneScreen({ scene, sceneIndex, totalScenes, kpis, onCommit, frozen })
           )}
         </div>
       </div>
+      </div>{/* end scene-scroll-area */}
     </>
   );
 }
